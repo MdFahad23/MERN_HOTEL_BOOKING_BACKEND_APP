@@ -1,6 +1,5 @@
 const _ = require("lodash");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const { User } = require("../model/User");
 const { createError } = require("../utils/error");
 
@@ -34,20 +33,12 @@ module.exports.Login = async (req, res, next) => {
     if (!validUser)
       return next(createError(400, "Wrong password or username!"));
 
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET_KEY
-    );
-
-    res
-      .cookie("access_token", token, {
-        httpOnly: true,
-      })
-      .status(200)
-      .send({
-        message: "Login Successfully! ",
-        user: _.pick(user, ["_id", "username", "email"]),
-      });
+    const token = user.generateJWT();
+    res.status(200).send({
+      message: "Login Successfully! ",
+      token: token,
+      user: _.pick(user, ["_id", "username", "email"]),
+    });
   } catch (err) {
     return next(err);
   }
